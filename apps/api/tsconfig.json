@@ -1,4 +1,14 @@
 {
   "extends": "../../config/typescript-config/node.json",
-  "include": ["src/**/*", "../../packages/auth/src/models", "../../packages/auth/src/subjects"]
+  "include": [
+    "src/**/*",
+    "../../packages/auth/src/models",
+    "../../packages/auth/src/subjects"
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
 }

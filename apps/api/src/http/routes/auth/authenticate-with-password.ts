@@ -3,6 +3,7 @@ import { compare } from "bcryptjs";
 import type { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
+import { BadRequestError } from "../_erros/bad-request-error";
 
 export async function authenticateWithPassword(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post("/sessions/password", {
@@ -14,9 +15,6 @@ export async function authenticateWithPassword(app: FastifyInstance) {
         password: z.string(),
       }),
       response: {
-        400: z.object({
-          message: z.string()
-        }),
         201: z.object({
           token: z.string(),
         }),
@@ -32,9 +30,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
 
     // se não achou, informa o cliente
     if (!userFromEmail) {
-      return reply.status(400).send({
-        message: "Invalid credentials."
-      })
+      throw new BadRequestError("Invalid credentials.")
     }
 
     // se encontrou:
@@ -42,22 +38,18 @@ export async function authenticateWithPassword(app: FastifyInstance) {
     // pois se for null ele não usou o social login, só github
 
     if (userFromEmail.passwordHash === null) {
-      return reply.status(400).send({
-        message: "User does not have a password, use social login"
-      })
+      throw new BadRequestError("User does not have a password, use social login")
     }
 
     // se ele fez login social, vamos comparar as senhas
-    const isPassowrdInvalid = await compare(
+    const isPasswordInvalid = await compare(
       password,
       userFromEmail.passwordHash
     )
 
     // se a senha for errada:
-    if (!isPassowrdInvalid) {
-      return reply.status(400).send({
-        message: "Invalid credentials"
-      })
+    if (!isPasswordInvalid) {
+      throw new BadRequestError("Invalid credentials.")
     }
 
     // gera o token assinando a prop sub com o email do usuário

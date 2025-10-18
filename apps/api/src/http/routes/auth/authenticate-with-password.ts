@@ -12,7 +12,15 @@ export async function authenticateWithPassword(app: FastifyInstance) {
       body: z.object({
         email: z.email(),
         password: z.string(),
-      })
+      }),
+      response: {
+        400: z.object({
+          message: z.string()
+        }),
+        201: z.object({
+          token: z.string(),
+        }),
+      }
     },
   }, async (request, reply) => {
     const { email, password } = request.body
@@ -52,6 +60,8 @@ export async function authenticateWithPassword(app: FastifyInstance) {
       })
     }
 
+    // gera o token assinando a prop sub com o email do usuário
+    // essa prop sub é "padrão" e carrega a informação de quem criou esse token
     const token = await reply.jwtSign(
       {
         sub: userFromEmail.id
@@ -61,7 +71,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
       }
     })
 
-    return reply.status(200).send({
+    return reply.status(201).send({
       token,
     })
   })

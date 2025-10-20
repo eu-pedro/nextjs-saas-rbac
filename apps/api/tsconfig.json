@@ -3,7 +3,8 @@
   "include": [
     "src/**/*",
     "../../packages/auth/src/models",
-    "../../packages/auth/src/subjects"
+    "../../packages/auth/src/subjects",
+    "@types"
   ],
   "compilerOptions": {
     "baseUrl": ".",

@@ -3,42 +3,46 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
 import { BadRequestError } from "../_erros/bad-request-error";
+import { auth } from "@/http/middlewares/auth";
 
 export async function getProfile(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get("/profile", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Get authenticated user profile.",
-      response: {
-        200: z.object({
-          user: z.object({
-            id: z.uuid(),
-            name: z.string().nullable(),
-            email: z.email(),
-            avatarUrl: z.url().nullable()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .register(auth)
+    .get("/profile", {
+      schema: {
+        tags: ["Auth"],
+        summary: "Get authenticated user profile.",
+        response: {
+          200: z.object({
+            user: z.object({
+              id: z.uuid(),
+              name: z.string().nullable(),
+              email: z.email(),
+              avatarUrl: z.url().nullable()
+            })
           })
-        })
-      }
-    },
-  }, async (request, reply) => {
-    const { sub } = await request.jwtVerify<{ sub: string }>()
-
-    const user = await prisma.user.findUnique({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
+        }
       },
-      where: {
-        id: sub
+    }, async (request, reply) => {
+      const userId = await request.getCurrentUserId()
+
+      const user = await prisma.user.findUnique({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+        },
+        where: {
+          id: userId
+        }
+      })
+
+      if (!user) {
+        throw new BadRequestError("User not found")
       }
+
+      return reply.status(200).send({ user })
     })
-
-    if (!user) {
-      throw new BadRequestError("User not found")
-    }
-
-    return reply.status(200).send({ user })
-  })
 }

@@ -1,0 +1,12 @@
+{
+  "extends": "../../config/typescript-config/node.json",
+  "include": [
+    "./index.ts"
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../index.ts"]
+    }
+  }
+}

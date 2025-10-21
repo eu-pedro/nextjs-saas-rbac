@@ -14,6 +14,7 @@ export async function createOrganization(app: FastifyInstance) {
       schema: {
         tags: ["Organizations"],
         summary: "Create a new organization",
+
         security: [{ bearerAuth: [] }],
         body: z.object({
           name: z.string(),
@@ -31,7 +32,6 @@ export async function createOrganization(app: FastifyInstance) {
 
       const { name, domain, shouldAttachUsersByDomain } = request.body
 
-
       if (domain) {
         const organizationByDomain = await prisma.organization.findUnique({
           where: { domain }
@@ -47,7 +47,6 @@ export async function createOrganization(app: FastifyInstance) {
           slug: createSlug(name),
           domain,
           shouldAttachUsersByDomain,
-
           ownerId: userId,
           members: {
             create: {

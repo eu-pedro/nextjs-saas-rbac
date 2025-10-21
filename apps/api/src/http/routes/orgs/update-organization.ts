@@ -9,6 +9,7 @@ import { userSchema } from "@saas/auth/src/models/user";
 import { organizationSchema } from "@saas/auth/src/models/organization";
 import { defineAbilityFor } from "@saas/auth";
 import { UnauthorizedError } from "../_erros/unauthorized-error";
+import { getUserPermissions } from "@/utils/get-user-permissions";
 
 export async function updateOrganization(app: FastifyInstance) {
   app
@@ -42,18 +43,12 @@ export async function updateOrganization(app: FastifyInstance) {
       const { name, domain, shouldAttachUsersByDomain } = request.body
 
 
-      const authUser = userSchema.parse({
-        id: userId,
-        role: membership.role,
-      })
+      const { cannot } = getUserPermissions(userId, membership.role)
 
       const authOrganization = organizationSchema.parse({
         id: organization.id,
         ownerId: organization.ownerId
       })
-
-
-      const { cannot } = defineAbilityFor(authUser)
 
       if (cannot('update', authOrganization)) {
         throw new UnauthorizedError("You're not allowed to update this organization.")

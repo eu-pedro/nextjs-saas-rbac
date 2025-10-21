@@ -3,25 +3,19 @@ import { prisma } from "@/lib/prisma";
 import type { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
-import { BadRequestError } from "../_erros/bad-request-error";
 import { organizationSchema } from "@saas/auth/src/models/organization";
 import { UnauthorizedError } from "../_erros/unauthorized-error";
 import { getUserPermissions } from "@/utils/get-user-permissions";
 
-export async function updateOrganization(app: FastifyInstance) {
+export async function shutdonwOrganization(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .register(auth)
-    .put("/organizations/:slug", {
+    .delete("/organizations/:slug", {
       schema: {
         tags: ["Organizations"],
-        summary: "Update organization details",
+        summary: "Shutdown organization",
         security: [{ bearerAuth: [] }],
-        body: z.object({
-          name: z.string(),
-          domain: z.string().nullish(),
-          shouldAttachUsersByDomain: z.boolean().optional()
-        }),
         params: z.object({
           slug: z.string()
         }),
@@ -37,9 +31,6 @@ export async function updateOrganization(app: FastifyInstance) {
 
       const { membership, organization } = await request.getUserMembership(slug)
 
-      const { name, domain, shouldAttachUsersByDomain } = request.body
-
-
       const { cannot } = getUserPermissions(userId, membership.role)
 
       const authOrganization = organizationSchema.parse({
@@ -47,33 +38,14 @@ export async function updateOrganization(app: FastifyInstance) {
         ownerId: organization.ownerId
       })
 
-      if (cannot('update', authOrganization)) {
-        throw new UnauthorizedError("You're not allowed to update this organization.")
+      if (cannot('delete', authOrganization)) {
+        throw new UnauthorizedError("You're not allowed to shutdown this organization.")
       }
 
-      if (domain) {
-        const organizationByDomain = await prisma.organization.findFirst({
-          where: {
-            domain,
-            id: {
-              not: organization.id
-            }
-          }
-        })
-        if (organizationByDomain) {
-          throw new BadRequestError("Another organization with same domain already exists.")
-        }
-      }
-
-      await prisma.organization.update({
+      await prisma.organization.delete({
         where: {
           id: organization.id
         },
-        data: {
-          name,
-          domain,
-          shouldAttachUsersByDomain,
-        }
       })
 
       return reply.status(204).send()

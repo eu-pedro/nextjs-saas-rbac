@@ -1,9 +1,7 @@
 "use server";
 
-import { signInWithPassword } from "@/http/sign-in-with-password";
 import { HTTPError } from "ky";
 import { z } from "zod";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { signUp } from "@/http/sign-up";
 
